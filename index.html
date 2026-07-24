@@ -49,12 +49,12 @@ canvas.pane{display:block;width:100%;height:auto;background:#1a0e12}
 <div class="desk">
   <div class="dtag">⚔ <b>POLEMOS</b> · war is the father of all · kept by <i>ENYO</i></div>
   <h1>THE ARMS RACE <span class="drag">◧ 2D · ⚔ 3D · 👶 TAP TO SPAR</span></h1>
-  <p class="sub">Two rivals, locked in a war neither can win. Every round one of them loses — and the strange law of the arms race is that the LOSER learns the most, catches up, and drives the next escalation. Neither pulls permanently ahead (you run just to stay in place), yet both climb far past anything either would become in peace. <b>Tap the fighters to spar</b>, and watch the strife forge them.</p>
+  <p class="sub">Two rivals, locked in a war neither can win. Every round one of them loses — and the strange law of the arms race is that the LOSER learns the most, catches up, and drives the next escalation. Neither pulls permanently ahead (you run just to stay in place), yet both climb far past anything either would become in peace &mdash; the two rise as a <b>double helix</b>, entangled, each strand's gain a rung that pulls the other up. <b>Tap the fighters to spar</b>, and watch the strife forge them.</p>
   <div class="tier"><span class="chip lit">◆ LIT</span><span class="chip amb">▲ AMBER</span></div>
   <div class="card">
     <div class="panels">
       <div class="panel"><div class="lbl">◧ THE LEDGER · 2D</div><canvas id="c2d" class="pane" width="420" height="328"></canvas></div>
-      <div class="panel"><div class="lbl">⚔ THE CLASH · 3D</div><canvas id="c3d" class="pane" width="420" height="328"></canvas></div>
+      <div class="panel"><div class="lbl">🧬 THE BRAID · 3D · entangled, climbing</div><canvas id="c3d" class="pane" width="420" height="328"></canvas></div>
     </div>
     <div class="toddler"><div class="lbl">👶 THE TODDLER CORNER — tap the fighters to spar</div><div class="hint">the loser learns most ✓</div><canvas id="ctod" width="860" height="396"></canvas></div>
     <div class="controls"><button class="btn" id="auto">⚔ spar ×50</button><button class="btn" id="reset">↺ back to peace</button></div>
@@ -84,28 +84,35 @@ canvas.pane{display:block;width:100%;height:auto;background:#1a0e12}
     tod:{ctx:gt,W:function(){return ct.width/DPR;},H:function(){return ct.height/DPR;}}};
   ct.addEventListener('pointerdown',function(e){e.preventDefault();if(window.__INST__&&window.__INST__.tap)window.__INST__.tap(env);});
   ct.addEventListener('touchstart',function(e){e.preventDefault();if(window.__INST__&&window.__INST__.tap)window.__INST__.tap(env);},{passive:false});
-  // ---- shared WebGL: two forces clashing (rush in, rebound) ----
+  // ---- shared WebGL: the DOUBLE HELIX — the two rivals as ENTANGLED strands, wound + climbing; amber rungs = each round's learning binding them ----
   var GL=(function(){
     var gl;try{gl=c3.getContext('webgl',{antialias:true,alpha:false})||c3.getContext('experimental-webgl');}catch(e){}
     if(!gl)return null;
-    var N=320, A=[],B=[],s=9;function rnd(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;}
-    for(var i=0;i<N;i++){var u=rnd()*2-1,th=rnd()*6.28,r=0.2+rnd()*0.08,sq=Math.sqrt(1-u*u);
-      A.push(Math.cos(th)*sq*r-0.55,u*r,Math.sin(th)*sq*r);B.push(Math.cos(th)*sq*r+0.55,u*r,Math.sin(th)*sq*r);}
+    var PI=3.14159265,TURNS=2.6,H=1.55,R=0.40,NP=300,A=[],B=[],RG=[];
+    for(var i=0;i<NP;i++){var tt=i/(NP-1),a=tt*TURNS*6.2831853,y=(tt-0.5)*H;
+      A.push(Math.cos(a)*R,y,Math.sin(a)*R);
+      B.push(Math.cos(a+PI)*R,y,Math.sin(a+PI)*R);}                     // the two strands, half a turn apart
+    for(var j=8;j<NP-8;j+=11){var t2=j/(NP-1),a2=t2*TURNS*6.2831853,y2=(t2-0.5)*H,
+      ax=Math.cos(a2)*R,az=Math.sin(a2)*R,bx=Math.cos(a2+PI)*R,bz=Math.sin(a2+PI)*R;
+      for(var k=1;k<7;k++){var f=k/7;RG.push(ax+(bx-ax)*f,y2,az+(bz-az)*f);}}   // the rungs (base pairs) that bind them
     function buf(a){var b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.STATIC_DRAW);return b;}
-    var bA=buf(A),bB=buf(B);
-    var VS='attribute vec3 p;uniform float ang,asp,push;void main(){vec3 q=p;q.x+=push;float c=cos(ang),s=sin(ang);vec3 r=vec3(q.x*c+q.z*s,q.y,-q.x*s+q.z*c);float pz=1.0/(2.2-r.z*0.5);vec2 o=vec2(r.x,r.y)*1.5*pz;o.x/=asp;gl_Position=vec4(o,0.0,1.0);gl_PointSize=3.2;}';
+    var bA=buf(A),bB=buf(B),bR=buf(RG),nS=NP,nR=RG.length/3;
+    var VS='attribute vec3 p;uniform float ang,asp,sz,lift;void main(){vec3 q=p;q.y+=lift;float c=cos(ang),s=sin(ang);vec3 r=vec3(q.x*c+q.z*s,q.y,-q.x*s+q.z*c);float pz=1.0/(2.2-r.z*0.5);vec2 o=vec2(r.x,r.y)*1.5*pz;o.x/=asp;gl_Position=vec4(o,0.0,1.0);gl_PointSize=sz*pz*2.4;}';
     var FS='precision mediump float;uniform vec3 col;uniform float a;void main(){vec2 d=gl_PointCoord-0.5;if(dot(d,d)>0.25)discard;gl_FragColor=vec4(col,a);}';
     function sh(t,x){var o=gl.createShader(t);gl.shaderSource(o,x);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(o);return o;}
     var prog;try{prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw'l';}catch(e){return null;}
-    var uAng=gl.getUniformLocation(prog,'ang'),uAsp=gl.getUniformLocation(prog,'asp'),uPush=gl.getUniformLocation(prog,'push'),uCol=gl.getUniformLocation(prog,'col'),uA=gl.getUniformLocation(prog,'a'),lp=gl.getAttribLocation(prog,'p');
+    var uAng=gl.getUniformLocation(prog,'ang'),uAsp=gl.getUniformLocation(prog,'asp'),uSz=gl.getUniformLocation(prog,'sz'),uLift=gl.getUniformLocation(prog,'lift'),uCol=gl.getUniformLocation(prog,'col'),uA=gl.getUniformLocation(prog,'a'),lp=gl.getAttribLocation(prog,'p');
     gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);
-    function drawCloud(b,push,col){gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,3,gl.FLOAT,false,0,0);
-      gl.uniform1f(uPush,push);gl.uniform3f(uCol,col[0],col[1],col[2]);gl.uniform1f(uA,0.8);gl.drawArrays(gl.POINTS,0,N);}
+    function drawArr(b,n,col,al,sz){gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,3,gl.FLOAT,false,0,0);
+      gl.uniform3f(uCol,col[0],col[1],col[2]);gl.uniform1f(uA,al);gl.uniform1f(uSz,sz);gl.drawArrays(gl.POINTS,0,n);}
     return {resize:function(){gl.viewport(0,0,c3.width,c3.height);},
       draw:function(t){gl.viewport(0,0,c3.width,c3.height);gl.clearColor(0.102,0.055,0.071,1);gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.useProgram(prog);gl.uniform1f(uAng,t*0.3);gl.uniform1f(uAsp,c3.width/c3.height);
-        var clash=Math.max(0,Math.sin(t*2.2))*0.42; // rush in then rebound
-        drawCloud(bA,clash,[0.69,0.25,0.35]);drawCloud(bB,-clash,[0.36,0.48,0.6]);}};
+        gl.useProgram(prog);gl.uniform1f(uAng,t*0.5);gl.uniform1f(uAsp,c3.width/c3.height);
+        gl.uniform1f(uLift,Math.sin(t*0.7)*0.03);                       // gentle climb/bob
+        var pulse=0.55+0.45*Math.max(0,Math.sin(t*2.2));               // the rungs breathe with each spar
+        drawArr(bR,nR,[0.90,0.58,0.20],0.42*pulse,3.4);                // amber rungs — the entanglement / learning that binds
+        drawArr(bA,nS,[0.72,0.28,0.38],0.95,4.4);                      // rival A strand (crimson)
+        drawArr(bB,nS,[0.40,0.52,0.64],0.95,4.4);}};                   // rival B strand (steel)
   })();
   if(!GL){var f=document.getElementById('fail');if(f){f.style.display='block';f.textContent='WebGL unavailable';}}
   var t0=null,inited=false;
