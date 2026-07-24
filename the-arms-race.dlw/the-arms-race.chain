@@ -1,9 +1,0 @@
-ROOT0-DLW-CHAIN-v1
-index : 1565
-slug  : the-arms-race
-seal  : 6d0bbe2228b9951867d88d7f707250ff816b88770a6ca6b37d8e8c110e2e09c4
-prev  : ae7e168b6b17ab21e7ee10bb3c9a8f631f62b386f8160c1aef7dad998b3db4f6
-link  : 17d809db0836e7865275b5721a176876626c2b3516e47d1c4baaf2a429a67b5a
-head  : 1dc124ff9c1dcc431c8fb4ae06bfe7ce2af78d52c46036ef84a181e1245e0e0f
-
-— the tether: link = sha256(index|slug|seal|prev). the chain head commits to the whole corpus.
